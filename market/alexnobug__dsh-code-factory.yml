@@ -1,0 +1,6 @@
+url: https://github.com/alexnobug/dsh-code-factory
+name: alexnobug/dsh-code-factory
+category: workflow
+description:
+  en: Runs a role-based multi-agent software delivery pipeline with staged gates, rework loops, a seven-item Definition of Done, and a read-only cockpit.
+  zh: 以角色化多代理运行分阶段软件交付流水线，包含阶段门禁、打回循环、七项 DoD 与只读驾驶舱。
