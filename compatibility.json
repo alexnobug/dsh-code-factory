@@ -1,0 +1,140 @@
+{
+  "$comment": [
+    "Version support matrix for the dsh-code-factory bundle plugin.",
+    "Hand-maintained on purpose: this file is the declaration an operator reads",
+    "before installing, and the input `scripts/doctor.mjs` checks the live",
+    "installation against. Keep it in sync with package.json (peerDependencies,",
+    "engines, dsh.bundle.patch, dsh.client.inject) whenever either side moves."
+  ],
+  "name": "dsh-code-factory",
+  "version": "0.2.3",
+  "dsh": {
+    "target": "0.2.2-rc.3",
+    "supported": [
+      "^0.2.2-rc.3"
+    ],
+    "node": ">=24.9.0",
+    "profile": "desktop",
+    "runtime": "DSH Desktop (app.asar core, dsh-primary-runtime)",
+    "installCommand": "dsh plugin --profile <name> add <this-package-or-path>",
+    "stateLayout": "<session-workspace>/.code-factory/<factoryId>/{factory.json,inbox/*.jsonl,artifacts.json}"
+  },
+  "packages": {
+    "@deepseek-ai/cordis": {
+      "range": "^4.1.0",
+      "role": "plugin host & service container (Context, ctx.effect)"
+    },
+    "@deepseek-ai/schemastery": {
+      "range": "^3.19.0",
+      "role": "Config schema for the plugin entry"
+    },
+    "@deepseek-ai/dsh-agent": {
+      "range": "^0.2.2-rc.3",
+      "role": "Agent/session types used by the tool surface"
+    },
+    "@deepseek-ai/dsh-session": {
+      "range": "^0.2.2-rc.3",
+      "role": "SessionId brand types for durable member sessions (types only; the plugin never appends session events — see docs/API-CONTRACTS.md §1.7)"
+    },
+    "@deepseek-ai/dsh-tools": {
+      "range": "^0.2.2-rc.3",
+      "role": "defineTool for the factory_* tool surface"
+    },
+    "@deepseek-ai/dsh-subagent": {
+      "range": "^0.2.2-rc.3",
+      "role": "startActivation members (durable child sessions)"
+    },
+    "@deepseek-ai/dsh-system-prompt": {
+      "range": "^0.2.2-rc.3",
+      "role": "captain-protocol prompt section"
+    },
+    "@deepseek-ai/dsh-commands": {
+      "range": "^0.2.2-rc.3",
+      "role": "the /factory slash command"
+    },
+    "@deepseek-ai/dsh-llm": {
+      "range": "^0.2.2-rc.3",
+      "role": "member model routing (AgentOptions)"
+    },
+    "@deepseek-ai/dsh-client-ui-slots": {
+      "range": "^0.2.2-rc.3",
+      "role": "client slot registration (cockpit panel, conversation card)"
+    },
+    "@deepseek-ai/dsh-client-ui-layout": {
+      "range": "^0.2.2-rc.3",
+      "role": "full-width layout slot for the cockpit"
+    },
+    "@deepseek-ai/dsh-client-ui-sidebar-right": {
+      "range": "^0.2.2-rc.3",
+      "role": "sidebar entry that opens the cockpit"
+    },
+    "@deepseek-ai/dsh-client-ui-conversation": {
+      "range": "^0.2.2-rc.3",
+      "role": "conversation-side card surface"
+    },
+    "@deepseek-ai/dsh-client-ui-chat": {
+      "range": "^0.2.2-rc.3",
+      "role": "chat-side rendering used by the cockpit panel"
+    },
+    "@deepseek-ai/dsh-client-locale": {
+      "range": "^0.2.2-rc.3",
+      "role": "zh-CN/en-US dictionaries for the panel"
+    },
+    "@deepseek-ai/dsh-client-connection": {
+      "range": "^0.2.2-rc.3",
+      "role": "client transport for the /code-factory HTTP status route"
+    },
+    "@deepseek-ai/dsh-api-session-controller": {
+      "range": "^0.2.2-rc.3",
+      "role": "session controller face exposed to the Web panel"
+    }
+  },
+  "packagesNote": "Every entry above is an OPTIONAL peerDependency in package.json: the DSH shell provides them at runtime, so an incompatible version blocks activation instead of being installed. `react` (^18.2.0) is the only non-@deepseek-ai runtime peer (the shell provides it to lib/client.js via require()).",
+  "client": {
+    "platform": "web",
+    "entry": "lib/client.js",
+    "format": "cjs-closure-factory",
+    "loaderId": "dsh-code-factory",
+    "loaderContract": "window.__ModuleLoader__.load({ id, factory })",
+    "mustExport": [
+      "inject",
+      "apply"
+    ],
+    "inject": [
+      "@deepseek-ai/dsh-client-locale",
+      "@deepseek-ai/dsh-client-ui-slots",
+      "@deepseek-ai/dsh-client-ui-layout",
+      "@deepseek-ai/dsh-client-ui-conversation",
+      "@deepseek-ai/dsh-client-ui-chat",
+      "@deepseek-ai/dsh-client-ui-sidebar-right",
+      "@deepseek-ai/dsh-api-session-controller"
+    ]
+  },
+  "hostServices": {
+    "inject": [
+      "tools",
+      "subagents",
+      "systemPrompt",
+      "agents",
+      "sessions",
+      "webServer",
+      "commands"
+    ],
+    "notes": "Bare cordis service keys (API-CONTRACTS §1.1). `webServer` gates the /code-factory status route, `commands` gates the /factory slash command; both fall back to alternative keys where the reference plugin does (webServer|httpServer).",
+    "bundlePatch": "cordis.patch.yml"
+  },
+  "gateCommands": {
+    "$comment": "Gate and DoD commands may ONLY come from the pipeline templates in src/domain/pipeline.ts, never from model output. The two entries below are the exported constants TEST_COMMAND / DELIVERY_CHECK_COMMAND; the build/compile commands are authored in the same template (npm run build --if-present for JS/TS stacks, python -m compileall for Python stacks).",
+    "test": "python -m pytest -q",
+    "deliveryCheck": "bash start.sh --check"
+  },
+  "verification": {
+    "typecheck": "pnpm typecheck",
+    "build": "pnpm build",
+    "l1Offline": "node scripts/verify.mjs",
+    "l1Subjects": "lib/domain (pure logic) + lib/store (durable state) + lib/store/lock (lock detach & FIFO serialisation) + lib/runtime (scheduler planner decisions & the shipped fake-host model)",
+    "l1Sections": "A role registry & routing / B pipeline integrity / C gate verdicts / D Definition of Done / E store round-trip / F lock detach & serialisation / G harness self-check / H stranded attempt recovery & executor verdict / I planner decision consistency & the shipped fake-host model / J actionable alerts derived from the record / K the member token reading is real. F/H/I double as the red-proven regression guards for the three defects that were only ever found offline (F = lock detach, t22; H = stranded attempt recovery + the three-state executor verdict, t21; I = parked decisions keeping `parkedFrom`, t25/t23): each guard was proven to fail by mutating a throwaway copy of lib/ and re-running this suite.",
+    "l1SourceAudit": "Section F also audits the source tree (src/**): every session-lifecycle call site must sit inside runDetachedFromFactoryLocks(...); it needs a repository checkout, not just lib/",
+    "installDoctor": "node scripts/doctor.mjs"
+  }
+}
