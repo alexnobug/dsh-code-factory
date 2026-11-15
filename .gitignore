@@ -1,0 +1,24 @@
+# 构建产物
+node_modules/
+lib/
+*.tsbuildinfo
+
+# 运行期状态（工厂把状态写在会话工作区，不在仓库里）
+.code-factory/
+
+# 临时的提交信息文件（PowerShell 没有 heredoc，提交信息必须先落盘；
+# 它绝不该进仓库 —— 曾经因为 git add -A 抢先一步而被提交过）
+.git-msg-*.txt
+
+# 一次性脚本与自检靶子。两者都是「跑完即删」的产物：`.tmp-*.mjs` 是临时
+# 度量/同步脚本，`scripts/.tmp-b7-case.mjs` 是 check-docs 自检复制出来的
+# 变异靶子（正常情况下 finally 会删掉它；进程被强杀时会残留）。
+# 忽略它们，是为了让一次被中断的自检不至于把工作树弄脏。
+.tmp-*.mjs
+scripts/.tmp-*.mjs
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
