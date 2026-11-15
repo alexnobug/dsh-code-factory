@@ -1,0 +1,42 @@
+# dsh-code-factory bundle patch: mounts the Code Factory plugin into the host
+# composition of a dsh profile.
+#
+# The plugin registers its `factory_*` tools into the shared `tools` registry,
+# one captain-protocol section into the global system prompt, and one HTTP
+# route plus a set of Web-client slots for the cockpit panel. Every session of
+# the profile can therefore drive the factory through natural language
+# ("用 code-factory 做 X") or the `/factory` slash command.
+#
+# Install: `dsh plugin --profile <name> add <this package>` (npm or a local path).
+- insert:
+    - id: code-factory
+      # Node-resolvable package name — must stay in sync with package.json `name`.
+      name: 'dsh-code-factory'
+      config:
+        # Factory state lives under `<session workspace>/<stateDir>/<factoryId>/`
+        # (factory.json + inbox/*.jsonl mailboxes + artifacts.json).
+        stateDir: .code-factory
+        # ctx.subagents provider used to spawn members ('spawn' or 'fork').
+        memberProvider: spawn
+        # NOTE: there is deliberately NO `memberMaxDepth` here.
+        # Passing `maxDepth: 0` to startActivation makes EVERY member spawn throw
+        # SubagentDepthError (a captain at depth 0 produces children at depth 1,
+        # and the check is `childDepth > maxDepth`). It also does not inherit to
+        # the member's own delegations, so it cannot express "members may not
+        # spawn subagents" anyway. "Members may not delegate" is enforced instead
+        # by `installMemberDelegationGuard`, which wraps `startActivation` and
+        # refuses a delegation whose parent is a member. On DSH 0.2.2 the old
+        # `persona`/`toolFilter` start fields are gone: captain factory tools are
+        # hidden from delegated agents by step-admission conditions, and the
+        # guard remains the runtime boundary for delegation-shaped host tools.
+        # See docs/limitations.md §5.
+        # NOTE: there is deliberately NO `maxMembers` here either. Its schema
+        # default is `DEFAULT_MAX_MEMBERS`, which is COMPUTED from the widest
+        # pipeline template (currently 11) so that no template is silently
+        # trimmed. Writing a literal here re-introduces exactly the H3 defect: it
+        # used to be 8, `web_fullstack` needs 11, and the trim order drops
+        # `ui_designer` / `db_arch` / `sys_arch` first — the three roles the
+        # design stage exists for. Set this key only to LOWER the cap on purpose
+        # (`factory_plan`'s own `maxMembers` argument overrides it per factory).
+        # Register the deterministic `/factory` activation surfaces.
+        slashCommand: true
