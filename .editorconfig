@@ -1,0 +1,19 @@
+# Editors, not tools, own whitespace. The gates that care about text — check-docs,
+# check-pack, verify — compare file *content*, so a stray CRLF or a missing final
+# newline shows up as a diff instead of as a review comment.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+[*.md]
+# A markdown hard break is two trailing spaces; trimming it changes rendering.
+trim_trailing_whitespace = false
+
+[*.{yml,yaml}]
+indent_size = 2
