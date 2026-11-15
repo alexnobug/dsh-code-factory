@@ -1,0 +1,24 @@
+#!/bin/sh
+#
+# .githooks/pre-push — push 之前跑一遍离线验证套件。
+#
+# WHY: pre-commit 只跑三道便宜的门（见 .githooks/pre-commit 的说明）。`verify`
+# 覆盖 97 项跨模块不变量，几十秒级，是「提交之前太慢、push 之前刚好」的那一档。
+# push 是把代码交出去的动作，也是 CI 唯一会看到的东西 —— 让 CI 失败在本地先发生。
+#
+# WHAT IT RUNS: `pnpm run verify`。
+# 不含 drill:* / smoke:load / check:pack：前者要真实起子进程、后者要真实装配
+# profile 与打包，都属于 release:check / CI 的档位，不是每次 push 都要付的代价。
+#
+# 出问题时用 `git push --no-verify` 显式绕过。
+
+set -e
+
+if ! command -v pnpm >/dev/null 2>&1; then
+  echo "[pre-push] 跳过：PATH 里没有 pnpm。装了 pnpm 再 push，或用 git push --no-verify 显式绕过。" >&2
+  exit 0
+fi
+
+echo "[pre-push] verify …"
+pnpm run verify
+echo "[pre-push] verify 通过。"
