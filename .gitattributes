@@ -1,0 +1,20 @@
+# 换行统一：仓库内 blob 与检出都用 LF。
+#
+# 为什么需要这一条：本项目的文档与脚本都以 LF 交付（各文档的交付说明里明确写了
+# "VALID-UTF8 / no-BOM / U+FFFD=0 / LF"），但 Windows 上 git 默认 core.autocrlf=true，
+# 会在检出时把 LF 改写成 CRLF —— 于是同一份文件在不同机器上内容不同。
+# 这里显式钉死 LF，且它优先于 core.autocrlf。
+#
+# 注意：scripts/ 下的校验器目前并不断言换行符（check-docs / verify / doctor 都没有
+# CRLF 检查），所以这类漂移不会被任何机制自动拦住 —— 正因如此才要在这里固定。
+* text=auto eol=lf
+
+# 二进制文件不做任何转换
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.ico  binary
+*.gif  binary
+*.webp binary
+*.zip  binary
+*.tgz  binary
