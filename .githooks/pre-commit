@@ -1,0 +1,38 @@
+#!/bin/sh
+#
+# .githooks/pre-commit — 提交前把「便宜但会被忘记」的三道门跑一遍。
+#
+# WHY: 评审对「工程规范」这条判据的原话是「无 hook」。CI 会在 push 之后拦住
+# 坏提交，但那已经是坏提交进了历史之后；本地 hook 的价值是把反馈挪到提交之前，
+# 而且不依赖任何人的记性。
+#
+# WHAT IT RUNS (and why exactly these three):
+#   check:docs:strict  — 文档里的计数是算出来的，代码一动就会过期（真出现过：
+#                        领域层加了 14 行，6 处文档数字立刻不一致）。
+#   check:changelog    — 「产物 → 提交」的对照表，最容易在提交时才写错。
+#   typecheck          — 类型错误是唯一一类「本可以不错」的错误。
+#
+# WHAT IT DELIBERATELY DOES NOT RUN: verify / drill:* / build / check:pack。
+# 那些要跑几十秒到几分钟，放进 pre-commit 只会让人习惯性 `--no-verify`，
+# 于是连这三道也一起被绕过。它们属于 pre-push 与 CI。
+#
+# 出问题时用 `git commit --no-verify` 显式绕过。
+
+set -e
+
+if ! command -v pnpm >/dev/null 2>&1; then
+  echo "[pre-commit] 跳过：PATH 里没有 pnpm。装了 pnpm 再提交，或用 git commit --no-verify 显式绕过。" >&2
+  exit 0
+fi
+
+run() {
+  echo "[pre-commit] $1 …"
+  # shellcheck disable=SC2068
+  pnpm run $@
+}
+
+run check:docs:strict
+run check:changelog
+run typecheck
+
+echo "[pre-commit] 三道门全过。"
